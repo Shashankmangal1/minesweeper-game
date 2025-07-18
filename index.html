@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minesweeper Game</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <h1>Minesweeper 🧨</h1>
-  
-  <div id="game-board"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minesweeper Game</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Minesweeper 🧨</h1>
+    <div id="top-bar">
+      <div id="mine-counter">💣 Mines: 10</div>
+      <button id="restart-btn">🔁 Restart</button>
+      <div id="timer">⏱️ Time: 0s</div>
+    </div>
+    <div id="game-board"></div>
 
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>

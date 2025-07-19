@@ -9,6 +9,8 @@ const mineCount = 10;
 let board = [];
 let timer = 0;
 let interval;
+let flagsUsed = 0;
+let gameOver = false;
 
 function startTimer() {
   timer = 0;
@@ -31,17 +33,18 @@ function resetGame() {
   stopTimer();
   gameBoard.innerHTML = "";
   board = [];
+  flagsUsed = 0;
+  gameOver = false;
   initializeGame();
 }
 
 restartBtn.addEventListener("click", resetGame);
 
 function initializeGame() {
-  let flagsUsed = 0;
   updateMineCounter(mineCount - flagsUsed);
   startTimer();
 
-  // 1. Initialize board
+  // 1. Create empty board
   for (let i = 0; i < rows; i++) {
     board[i] = [];
     for (let j = 0; j < cols; j++) {
@@ -56,19 +59,18 @@ function initializeGame() {
     }
   }
 
-  // 2. Place mines
+  // 2. Place mines randomly
   let minesPlaced = 0;
   while (minesPlaced < mineCount) {
     const x = Math.floor(Math.random() * rows);
     const y = Math.floor(Math.random() * cols);
-
     if (!board[x][y].isMine) {
       board[x][y].isMine = true;
       minesPlaced++;
     }
   }
 
-  // 3. Count neighboring mines
+  // 3. Calculate neighboring mines
   function countNeighborMines(x, y) {
     let count = 0;
     for (let dx = -1; dx <= 1; dx++) {
@@ -90,7 +92,7 @@ function initializeGame() {
     }
   }
 
-  // 4. Create UI
+  // 4. Create UI cells
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
       const cellDiv = document.createElement("div");
@@ -103,29 +105,14 @@ function initializeGame() {
 
       // Left click: Reveal
       cellDiv.addEventListener("click", () => {
-        if (cellData.isRevealed || cellData.isFlagged) return;
-
-        cellData.isRevealed = true;
-        cellDiv.classList.add("revealed");
-
-        if (cellData.isMine) {
-          cellDiv.textContent = "💣";
-          cellDiv.classList.add("mine");
-          stopTimer();
-          alert("Boom! Game Over.");
-        } else {
-          const num = cellData.neighborMines;
-          if (num > 0) {
-            cellDiv.textContent = num;
-            cellDiv.dataset.num = num;
-          }
-        }
+        if (gameOver || cellData.isRevealed || cellData.isFlagged) return;
+        revealCell(cellData);
       });
 
       // Right click: Flag
       cellDiv.addEventListener("contextmenu", (e) => {
         e.preventDefault();
-        if (cellData.isRevealed) return;
+        if (gameOver || cellData.isRevealed) return;
 
         cellData.isFlagged = !cellData.isFlagged;
         flagsUsed += cellData.isFlagged ? 1 : -1;
@@ -140,5 +127,51 @@ function initializeGame() {
   }
 }
 
-// Initial game start
+// Reveal logic with flood fill
+function revealCell(cellData) {
+  if (cellData.isRevealed || cellData.isFlagged) return;
+
+  cellData.isRevealed = true;
+  cellData.element.classList.add("revealed");
+
+  if (cellData.isMine) {
+    cellData.element.textContent = "💣";
+    cellData.element.classList.add("mine");
+    gameOver = true;
+    stopTimer();
+    setTimeout(() => alert("💥 Boom! Game Over."), 200);
+    return;
+  }
+
+  const num = cellData.neighborMines;
+  if (num > 0) {
+    cellData.element.textContent = num;
+    cellData.element.dataset.num = num;
+  } else {
+    revealEmptyNeighbors(cellData.x, cellData.y);
+  }
+}
+
+function revealEmptyNeighbors(x, y) {
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (
+        nx >= 0 &&
+        nx < rows &&
+        ny >= 0 &&
+        ny < cols &&
+        !board[nx][ny].isRevealed &&
+        !board[nx][ny].isMine &&
+        !board[nx][ny].isFlagged
+      ) {
+        const neighbor = board[nx][ny];
+        revealCell(neighbor);
+      }
+    }
+  }
+}
+
+// Start the game
 initializeGame();
